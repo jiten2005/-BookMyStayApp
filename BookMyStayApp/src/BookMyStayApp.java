@@ -1,79 +1,106 @@
 import java.util.*;
 
-// Represents an Add-On Service
-class AddOnService {
-    private String serviceName;
-    private double cost;
+// Represents a Reservation
+class Reservation {
+    private String reservationId;
+    private String guestName;
+    private String roomType;
+    private double basePrice;
 
-    public AddOnService(String serviceName, double cost) {
-        this.serviceName = serviceName;
-        this.cost = cost;
+    public Reservation(String reservationId, String guestName, String roomType, double basePrice) {
+        this.reservationId = reservationId;
+        this.guestName = guestName;
+        this.roomType = roomType;
+        this.basePrice = basePrice;
     }
 
-    public String getServiceName() {
-        return serviceName;
+    public String getReservationId() {
+        return reservationId;
     }
 
-    public double getCost() {
-        return cost;
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+
+    public double getBasePrice() {
+        return basePrice;
     }
 
     @Override
     public String toString() {
-        return serviceName + " (₹" + cost + ")";
+        return "Reservation ID: " + reservationId +
+                ", Guest: " + guestName +
+                ", Room Type: " + roomType +
+                ", Price: ₹" + basePrice;
     }
 }
 
-// Manages mapping between Reservation and Add-On Services
-class AddOnServiceManager {
+// Maintains Booking History
+class BookingHistory {
 
-    // Map<ReservationID, List of Services>
-    private Map<String, List<AddOnService>> reservationServicesMap;
+    private List<Reservation> confirmedBookings;
 
-    public AddOnServiceManager() {
-        reservationServicesMap = new HashMap<>();
+    public BookingHistory() {
+        confirmedBookings = new ArrayList<>();
     }
 
-    // Add service to reservation
-    public void addService(String reservationId, AddOnService service) {
-        reservationServicesMap
-                .computeIfAbsent(reservationId, k -> new ArrayList<>())
-                .add(service);
-
-        System.out.println("Service added to Reservation " + reservationId + ": " + service);
+    // Add confirmed reservation
+    public void addReservation(Reservation reservation) {
+        confirmedBookings.add(reservation);
+        System.out.println("Booking confirmed and added to history: " + reservation.getReservationId());
     }
 
-    // Get services for a reservation
-    public List<AddOnService> getServices(String reservationId) {
-        return reservationServicesMap.getOrDefault(reservationId, new ArrayList<>());
+    // Retrieve all bookings
+    public List<Reservation> getAllReservations() {
+        return new ArrayList<>(confirmedBookings); // return copy (read-only safety)
     }
+}
 
-    // Calculate total cost of services
-    public double calculateTotalServiceCost(String reservationId) {
-        List<AddOnService> services = getServices(reservationId);
+// Generates Reports
+class BookingReportService {
 
-        double total = 0.0;
-        for (AddOnService service : services) {
-            total += service.getCost();
-        }
-        return total;
-    }
-
-    // Display all services
-    public void displayServices(String reservationId) {
-        List<AddOnService> services = getServices(reservationId);
-
-        if (services.isEmpty()) {
-            System.out.println("No add-on services selected for Reservation " + reservationId);
+    // Display all bookings
+    public void displayAllBookings(List<Reservation> reservations) {
+        if (reservations.isEmpty()) {
+            System.out.println("No bookings found.");
             return;
         }
 
-        System.out.println("\nAdd-On Services for Reservation " + reservationId + ":");
-        for (AddOnService service : services) {
-            System.out.println("- " + service);
+        System.out.println("\n--- Booking History ---");
+        for (Reservation r : reservations) {
+            System.out.println(r);
+        }
+    }
+
+    // Generate summary report
+    public void generateSummaryReport(List<Reservation> reservations) {
+        System.out.println("\n--- Booking Summary Report ---");
+
+        int totalBookings = reservations.size();
+        double totalRevenue = 0;
+
+        Map<String, Integer> roomTypeCount = new HashMap<>();
+
+        for (Reservation r : reservations) {
+            totalRevenue += r.getBasePrice();
+
+            roomTypeCount.put(
+                    r.getRoomType(),
+                    roomTypeCount.getOrDefault(r.getRoomType(), 0) + 1
+            );
         }
 
-        System.out.println("Total Add-On Cost: ₹" + calculateTotalServiceCost(reservationId));
+        System.out.println("Total Bookings: " + totalBookings);
+        System.out.println("Total Revenue: ₹" + totalRevenue);
+
+        System.out.println("\nBookings by Room Type:");
+        for (Map.Entry<String, Integer> entry : roomTypeCount.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
     }
 }
 
@@ -83,46 +110,53 @@ public class BookMyStayApp {
     public static void main(String[] args) {
 
         Scanner scanner = new Scanner(System.in);
-        AddOnServiceManager manager = new AddOnServiceManager();
-
-        System.out.print("Enter Reservation ID: ");
-        String reservationId = scanner.nextLine();
+        BookingHistory history = new BookingHistory();
+        BookingReportService reportService = new BookingReportService();
 
         while (true) {
-            System.out.println("\n--- Add-On Service Menu ---");
-            System.out.println("1. Add Breakfast (₹500)");
-            System.out.println("2. Add Airport Pickup (₹1200)");
-            System.out.println("3. Add Extra Bed (₹800)");
-            System.out.println("4. View Services");
-            System.out.println("5. Exit");
+            System.out.println("\n--- Booking System Menu ---");
+            System.out.println("1. Confirm Booking");
+            System.out.println("2. View Booking History");
+            System.out.println("3. Generate Report");
+            System.out.println("4. Exit");
 
-            System.out.print("Choose an option: ");
+            System.out.print("Enter choice: ");
             int choice = scanner.nextInt();
+            scanner.nextLine(); // consume newline
 
             switch (choice) {
                 case 1:
-                    manager.addService(reservationId, new AddOnService("Breakfast", 500));
+                    System.out.print("Enter Reservation ID: ");
+                    String id = scanner.nextLine();
+
+                    System.out.print("Enter Guest Name: ");
+                    String name = scanner.nextLine();
+
+                    System.out.print("Enter Room Type: ");
+                    String roomType = scanner.nextLine();
+
+                    System.out.print("Enter Price: ");
+                    double price = scanner.nextDouble();
+
+                    Reservation reservation = new Reservation(id, name, roomType, price);
+                    history.addReservation(reservation);
                     break;
 
                 case 2:
-                    manager.addService(reservationId, new AddOnService("Airport Pickup", 1200));
+                    reportService.displayAllBookings(history.getAllReservations());
                     break;
 
                 case 3:
-                    manager.addService(reservationId, new AddOnService("Extra Bed", 800));
+                    reportService.generateSummaryReport(history.getAllReservations());
                     break;
 
                 case 4:
-                    manager.displayServices(reservationId);
-                    break;
-
-                case 5:
                     System.out.println("Exiting...");
                     scanner.close();
                     return;
 
                 default:
-                    System.out.println("Invalid choice. Try again.");
+                    System.out.println("Invalid choice.");
             }
         }
     }
